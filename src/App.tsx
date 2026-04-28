@@ -16,9 +16,15 @@ import {
   FileText,
   Clock,
   Trash2,
-  Info
+  Info,
+  Sparkles,
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface ReportData {
   chamada: string;
@@ -220,6 +226,31 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
     }
   };
 
+  const handleAISuggestion = async (fieldName: keyof ReportData, currentText: string) => {
+    if (!currentText || currentText.length < 3) return;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Você é um assistente especializado em relatórios de bombeiros (REDS). 
+Melhore o seguinte texto para o campo "${fieldName}" de um relatório de combate a incêndio florestal.
+O texto deve ser profissional, técnico, conciso e estar em LETRAS MAIÚSCULAS.
+Corrija erros gramaticais e termos técnicos se necessário.
+
+Texto original: "${currentText}"
+
+Retorne APENAS o texto melhorado, sem explicações adicionais.`,
+      });
+
+      if (response.text) {
+        setData(prev => ({ ...prev, [fieldName]: response.text.trim().toUpperCase() }));
+      }
+    } catch (error) {
+      console.error("Erro ao melhorar texto:", error);
+      alert("Houve um erro ao processar a sugestão da IA.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F3F4F6] font-sans text-gray-900 pb-12">
       {/* Header */}
@@ -271,8 +302,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
           <div className="space-y-6">
             <Section title="1. Dados da Ocorrência">
               <div className="space-y-4">
-                <label className="block">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Dados da Chamada</span>
+                <label className="block relative group">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Dados da Chamada</span>
+                    <button 
+                      onClick={() => handleAISuggestion('chamada', data.chamada)}
+                      disabled={!data.chamada || data.chamada.length < 3}
+                      className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
+                    >
+                      <Sparkles className="w-3 h-3" /> Melhorar com IA
+                    </button>
+                  </div>
                   <textarea
                     name="chamada"
                     value={data.chamada}
@@ -281,6 +321,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
                     className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-100 transition-all font-sans"
                     rows={2}
                   />
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {['FUMAÇA EM ÁREA DE MATA', 'INCÊNDIO PRÓXIMO À RODOVIA', 'FOGO EM TERRENO BALDIO'].map(sug => (
+                      <button 
+                        key={sug}
+                        onClick={() => setData(prev => ({ ...prev, chamada: sug }))}
+                        className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
                 </label>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -332,8 +383,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
                   </select>
                 </label>
               </div>
-              <label className="block">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Características da Vegetação</span>
+              <label className="block relative group">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Características da Vegetação</span>
+                  <button 
+                    onClick={() => handleAISuggestion('caracteristicas', data.caracteristicas)}
+                    disabled={!data.caracteristicas || data.caracteristicas.length < 3}
+                    className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
+                  >
+                    <Sparkles className="w-3 h-3" /> Melhorar com IA
+                  </button>
+                </div>
                 <textarea
                   name="caracteristicas"
                   value={data.caracteristicas}
@@ -342,6 +402,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
                   className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
                   rows={2}
                 />
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {['MATA CILIAR', 'CERRADO DENSO', 'CAMPO SUJO', 'PASTAGEM SECA'].map(sug => (
+                    <button 
+                      key={sug}
+                      onClick={() => setData(prev => ({ ...prev, caracteristicas: sug }))}
+                      className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
               </label>
             </Section>
 
@@ -541,8 +612,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
                      />
                   </div>
                 )}
-                <label className="block">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Causa Presumida</span>
+                <label className="block relative group">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Causa Presumida</span>
+                    <button 
+                      onClick={() => handleAISuggestion('causa', data.causa)}
+                      disabled={!data.causa || data.causa.length < 3}
+                      className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
+                    >
+                      <Sparkles className="w-3 h-3" /> Melhorar com IA
+                    </button>
+                  </div>
                   <input
                     type="text"
                     name="causa"
@@ -551,6 +631,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
                     placeholder="antrópica, lixão, raio, testemunha..."
                     className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
                   />
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {['AÇÃO ANTRÓPICA PROVOCADA', 'DESCONHECIDA', 'CURTO-CIRCUITO EM REDE ELÉTRICA'].map(sug => (
+                      <button 
+                        key={sug}
+                        onClick={() => setData(prev => ({ ...prev, causa: sug }))}
+                        className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
                 </label>
               </div>
             </Section>
@@ -676,8 +767,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
                 </div>
 
                 {data.danos_identificados && (
-                  <label className="block animate-in fade-in slide-in-from-top-1 duration-200">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Danos Causados</span>
+                  <label className="block animate-in fade-in slide-in-from-top-1 duration-200 relative group">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Danos Causados</span>
+                      <button 
+                        onClick={() => handleAISuggestion('danos', data.danos)}
+                        disabled={!data.danos || data.danos.length < 3}
+                        className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
+                      >
+                        <Sparkles className="w-3 h-3" /> Melhorar com IA
+                      </button>
+                    </div>
                     <textarea
                       name="danos"
                       value={data.danos}
@@ -686,6 +786,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
                       className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
                       rows={2}
                     />
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {['DANOS À FAUNA E FLORA LOCAL', 'CERCA DE PROPRIEDADE RURAL', 'REDES DE ENERGIA'].map(sug => (
+                        <button 
+                          key={sug}
+                          onClick={() => setData(prev => ({ ...prev, danos: sug }))}
+                          className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
+                        >
+                          {sug}
+                        </button>
+                      ))}
+                    </div>
                   </label>
                 )}
                 <label className="block">
@@ -703,8 +814,17 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
             </Section>
 
             <Section title="8. Finalização">
-                <label className="block">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Outras Informações Relevantes</span>
+                <label className="block relative group">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Outras Informações Relevantes</span>
+                    <button 
+                      onClick={() => handleAISuggestion('outras_info', data.outras_info)}
+                      disabled={!data.outras_info || data.outras_info.length < 3}
+                      className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
+                    >
+                      <Sparkles className="w-3 h-3" /> Melhorar com IA
+                    </button>
+                  </div>
                   <textarea
                     name="outras_info"
                     value={data.outras_info}
