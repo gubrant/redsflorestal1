@@ -130,6 +130,8 @@ export default function App() {
   const [data, setData] = useState<ReportData>(initialData);
   const [copied, setCopied] = useState(false);
 
+  const [imageError, setImageError] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setData(prev => ({ ...prev, [name]: value }));
@@ -150,28 +152,29 @@ export default function App() {
       area_aferida, area_queimada, metodo_afericao, danos_identificados, danos, apoio, plano_contingencia, outras_info
     } = data;
 
-    const lat = `${lat_graus || '___'}°${lat_min || '___'}'${lat_seg || '___'}"S`;
-    const lon = `${lon_graus || '___'}°${lon_min || '___'}'${lon_seg || '___'}"W`;
-    
-    const origem_lat = `${origem_lat_graus || '___'}°${origem_lat_min || '___'}'${origem_lat_seg || '___'}"S`;
-    const origem_lon = `${origem_lon_graus || '___'}°${origem_lon_min || '___'}'${origem_lon_seg || '___'}"W`;
+    const up = (val: any) => String(val || '').toUpperCase();
+    const upDef = (val: any, def: string) => val ? String(val).toUpperCase() : def;
 
-    const up = (val: string) => (val || '-').toUpperCase();
+    const lat = `${upDef(lat_graus, '___')}°${upDef(lat_min, '___')}'${upDef(lat_seg, '___')}"S`;
+    const lon = `${upDef(lon_graus, '___')}°${upDef(lon_min, '___')}'${upDef(lon_seg, '___')}"W`;
+    
+    const origem_lat = `${upDef(origem_lat_graus, '___')}°${upDef(origem_lat_min, '___')}'${upDef(origem_lat_seg, '___')}"S`;
+    const origem_lon = `${upDef(origem_lon_graus, '___')}°${upDef(origem_lon_min, '___')}'${upDef(origem_lon_seg, '___')}"W`;
 
     const info_origem = origem_identificada 
-      ? `PRESUME-SE A ORIGEM DO INCÊNDIO SE DEU NO PONTO ${origem_lat_graus ? origem_lat : '__°__\'__._"S'} ${origem_lon_graus ? origem_lon : '__°__\'__._"W'} COM CAUSA PRESUMIDA ${up(causa)}`
+      ? `PRESUME-SE A ORIGEM DO INCÊNDIO SE DEU NO PONTO ${origem_lat_graus ? origem_lat : '__°__\'__._"S'} ${origem_lon_graus ? origem_lon : '__°__\'__._"W'} COM CAUSA PRESUMIDA ${upDef(causa, '-')}`
       : 'NÃO FOI POSSÍVEL IDENTIFICAR O PONTO EXATO DE ORIGEM';
 
     const info_area = area_aferida
-      ? `FOI QUEIMADA UMA ÁREA TOTAL DE ${area_queimada || '-'} HA DE ACORDO COM O MÉTODO DE AFERIÇÃO: ${up(metodo_afericao)}`
+      ? `FOI QUEIMADA UMA ÁREA TOTAL DE ${upDef(area_queimada, '-')} HA DE ACORDO COM O MÉTODO DE AFERIÇÃO: ${upDef(metodo_afericao, '-')}`
       : `NÃO FOI POSSÍVEL AFERIR A ÁREA TOTAL QUEIMADA ATÉ O MOMENTO`;
 
     const info_danos = danos_identificados
-      ? `O INCÊNDIO CAUSOU OS SEGUINTES DANOS ${up(danos)}`
+      ? `O INCÊNDIO CAUSOU OS SEGUINTES DANOS ${upDef(danos, '-')}`
       : `NÃO FORAM IDENTIFICADOS DANOS MATERIAIS OU ÀS PESSOAS NO LOCAL`;
 
     const info_atmosferica = dados_atmosfericos_disponiveis
-      ? `TEMPERATURA DE ${temperatura || '-'}°C E UMIDADE DO AR DE ${umidade || '-'}%`
+      ? `TEMPERATURA DE ${upDef(temperatura, '-')}°C E UMIDADE DO AR DE ${upDef(umidade, '-')}%`
       : `NÃO HAVIA MEIO DISPONÍVEL PARA COLETAR OS DADOS ATMOSFÉRICOS NO LOCAL`;
 
     const recursos_list = [];
@@ -194,15 +197,15 @@ export default function App() {
       ? 'APRESENTOU O PLANO DE CONTINGÊNCIA DO LOCAL, DEVIDAMENTE ANEXADO A ESTE REDS'
       : 'NÃO APRESENTOU O PLANO DE CONTINGÊNCIA DO LOCAL';
 
-    return `A GU BM DESLOCOU PARA UM CHAMADO DE SUPOSTO ${up(chamada)}. 
-NO LOCAL, COORDENADAS GEOGRÁFICAS ${lat} ${lon}, TRATAVA-SE DE UMA ÁREA DE BIOMA ${bioma.toUpperCase()} COM AS SEGUINTES CARACTERÍSTICAS: ${up(caracteristicas)}. 
-A LINHA DE INCÊNDIO DE APROXIMADAMENTE ${linha_metros || '-'} METROS DESLOCAVA-SE NO SENTIDO ${up(sentido_deslocamento)}. O VENTO PREDOMINANTE ESTAVA NO SENTIDO ${up(sentido_vento)}, ${info_atmosferica}. VERIFICOU-SE QUE TRATAVA-SE DE INCÊNDIO ${tipo_incendio.toUpperCase()}.
-A GU BM, COM USO DE ${recursos_string} COM UM ${up(tecnica)} DEBELOU O INCÊNDIO APÓS ${duracao_extenso} DE COMBATE. 
+    return `A GU BM DESLOCOU PARA UM CHAMADO DE SUPOSTO ${upDef(chamada, '-')}. 
+NO LOCAL, COORDENADAS GEOGRÁFICAS ${lat} ${lon}, TRATAVA-SE DE UMA ÁREA DE BIOMA ${bioma.toUpperCase()} COM AS SEGUINTES CARACTERÍSTICAS: ${upDef(caracteristicas, '-')}. 
+A LINHA DE INCÊNDIO DE APROXIMADAMENTE ${upDef(linha_metros, '-')} METROS DESLOCAVA-SE NO SENTIDO ${upDef(sentido_deslocamento, '-')}. O VENTO PREDOMINANTE ESTAVA NO SENTIDO ${upDef(sentido_vento, '-')}, ${info_atmosferica}. VERIFICOU-SE QUE TRATAVA-SE DE INCÊNDIO ${tipo_incendio.toUpperCase()}.
+A GU BM, COM USO DE ${recursos_string} COM UM ${upDef(tecnica, '-')} DEBELOU O INCÊNDIO APÓS ${duracao_extenso} DE COMBATE. 
 ${info_origem}.
-NO LOCAL, ${tem_aceiros === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} ACEIROS ${detalhe_aceiros ? `(${up(detalhe_aceiros)})` : ''}, OU OUTRO MÉTODO PREVENTIVO E ${acumulo_combustivel === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} INDÍCIOS DE ACÚMULO DE COMBUSTÍVEL. FORAM GASTOS ${litros_agua || '0'} LITROS DE ÁGUA. ${info_area}. ${info_danos}.
-AS EQUIPES BM RECEBERAM APOIO DE ${up(apoio)}. 
+NO LOCAL, ${tem_aceiros === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} ACEIROS ${detalhe_aceiros ? `(${upDef(detalhe_aceiros, '')})` : ''}, OU OUTRO MÉTODO PREVENTIVO E ${acumulo_combustivel === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} INDÍCIOS DE ACÚMULO DE COMBUSTÍVEL. FORAM GASTOS ${upDef(litros_agua, '0')} LITROS DE ÁGUA. ${info_area}. ${info_danos}.
+AS EQUIPES BM RECEBERAM APOIO DE ${upDef(apoio, '-')}. 
 O RESPONSÁVEL PELA UC (OU ÁREA PARTICULAR) ${info_plano}.
-OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
+OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
   }, [data]);
 
   const copyToClipboard = () => {
@@ -223,14 +226,30 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img 
-              src="/bemad_logo.png" 
-              alt="BEMAD Logo" 
-              className="w-12 h-12 object-contain"
-              referrerPolicy="no-referrer"
-            />
+            <div className="relative w-16 h-16 bg-white rounded-full flex items-center justify-center border-2 border-gray-100 overflow-hidden shadow-sm group">
+              {!imageError ? (
+                <img 
+                  src="/bemad_logo.png" 
+                  alt="BEMAD Logo" 
+                  className="w-full h-full object-contain"
+                  referrerPolicy="no-referrer"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="relative flex flex-col items-center justify-center w-full h-full text-white bg-black p-2">
+                  <div className="absolute top-1 text-[7px] font-bold tracking-tighter opacity-80">BEMAD</div>
+                  <div className="relative">
+                    <Flame className="w-8 h-8 text-red-500" />
+                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center opacity-20">
+                      <div className="w-6 h-6 border border-white rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-1 text-[7px] font-bold tracking-widest opacity-80">PCIF</div>
+                </div>
+              )}
+            </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 leading-tight uppercase tracking-tight">Relatório Padrão de Combate aos incêndios Florestais</h1>
+              <h1 className="text-xl font-bold text-gray-900 leading-tight uppercase tracking-tight font-sans">Relatório Padrão de Combate aos incêndios Florestais</h1>
               <p className="text-xs text-gray-500 italic">Formulário Padrão de Registro de Eventos de Defesa Social (REDS)</p>
             </div>
           </div>
