@@ -1,6 +1,6 @@
 {
   "name": "Gerador de Relatório BM - Incêndios",
-  "description": "Ferramenta para preenchimento rápido e padronizado de relatórios de combate a incêndios florestais (BOMBEIROS).",
+  "description": "Ferramenta para preenchimento rápido e padronizado de relatórios de combate a incêndios florestais CBMMG/BEMAD/CPA/PCIF.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
