@@ -16,15 +16,9 @@ import {
   FileText,
   Clock,
   Trash2,
-  Info,
-  Sparkles,
-  CheckCircle2,
-  Loader2
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface ReportData {
   chamada: string;
@@ -136,8 +130,6 @@ export default function App() {
   const [data, setData] = useState<ReportData>(initialData);
   const [copied, setCopied] = useState(false);
 
-  const [imageError, setImageError] = useState(false);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setData(prev => ({ ...prev, [name]: value }));
@@ -158,29 +150,28 @@ export default function App() {
       area_aferida, area_queimada, metodo_afericao, danos_identificados, danos, apoio, plano_contingencia, outras_info
     } = data;
 
-    const up = (val: any) => String(val || '').toUpperCase();
-    const upDef = (val: any, def: string) => val ? String(val).toUpperCase() : def;
-
-    const lat = `${upDef(lat_graus, '___')}°${upDef(lat_min, '___')}'${upDef(lat_seg, '___')}"S`;
-    const lon = `${upDef(lon_graus, '___')}°${upDef(lon_min, '___')}'${upDef(lon_seg, '___')}"W`;
+    const lat = `${lat_graus || '___'}°${lat_min || '___'}'${lat_seg || '___'}"S`;
+    const lon = `${lon_graus || '___'}°${lon_min || '___'}'${lon_seg || '___'}"W`;
     
-    const origem_lat = `${upDef(origem_lat_graus, '___')}°${upDef(origem_lat_min, '___')}'${upDef(origem_lat_seg, '___')}"S`;
-    const origem_lon = `${upDef(origem_lon_graus, '___')}°${upDef(origem_lon_min, '___')}'${upDef(origem_lon_seg, '___')}"W`;
+    const origem_lat = `${origem_lat_graus || '___'}°${origem_lat_min || '___'}'${origem_lat_seg || '___'}"S`;
+    const origem_lon = `${origem_lon_graus || '___'}°${origem_lon_min || '___'}'${origem_lon_seg || '___'}"W`;
+
+    const up = (val: string) => (val || '-').toUpperCase();
 
     const info_origem = origem_identificada 
-      ? `PRESUME-SE A ORIGEM DO INCÊNDIO SE DEU NO PONTO ${origem_lat_graus ? origem_lat : '__°__\'__._"S'} ${origem_lon_graus ? origem_lon : '__°__\'__._"W'} COM CAUSA PRESUMIDA ${upDef(causa, '-')}`
+      ? `PRESUME-SE A ORIGEM DO INCÊNDIO SE DEU NO PONTO ${origem_lat_graus ? origem_lat : '__°__\'__._"S'} ${origem_lon_graus ? origem_lon : '__°__\'__._"W'} COM CAUSA PRESUMIDA ${up(causa)}`
       : 'NÃO FOI POSSÍVEL IDENTIFICAR O PONTO EXATO DE ORIGEM';
 
     const info_area = area_aferida
-      ? `FOI QUEIMADA UMA ÁREA TOTAL DE ${upDef(area_queimada, '-')} HA DE ACORDO COM O MÉTODO DE AFERIÇÃO: ${upDef(metodo_afericao, '-')}`
+      ? `FOI QUEIMADA UMA ÁREA TOTAL DE ${area_queimada || '-'} HA DE ACORDO COM O MÉTODO DE AFERIÇÃO: ${up(metodo_afericao)}`
       : `NÃO FOI POSSÍVEL AFERIR A ÁREA TOTAL QUEIMADA ATÉ O MOMENTO`;
 
     const info_danos = danos_identificados
-      ? `O INCÊNDIO CAUSOU OS SEGUINTES DANOS ${upDef(danos, '-')}`
+      ? `O INCÊNDIO CAUSOU OS SEGUINTES DANOS ${up(danos)}`
       : `NÃO FORAM IDENTIFICADOS DANOS MATERIAIS OU ÀS PESSOAS NO LOCAL`;
 
     const info_atmosferica = dados_atmosfericos_disponiveis
-      ? `TEMPERATURA DE ${upDef(temperatura, '-')}°C E UMIDADE DO AR DE ${upDef(umidade, '-')}%`
+      ? `TEMPERATURA DE ${temperatura || '-'}°C E UMIDADE DO AR DE ${umidade || '-'}%`
       : `NÃO HAVIA MEIO DISPONÍVEL PARA COLETAR OS DADOS ATMOSFÉRICOS NO LOCAL`;
 
     const recursos_list = [];
@@ -203,15 +194,15 @@ export default function App() {
       ? 'APRESENTOU O PLANO DE CONTINGÊNCIA DO LOCAL, DEVIDAMENTE ANEXADO A ESTE REDS'
       : 'NÃO APRESENTOU O PLANO DE CONTINGÊNCIA DO LOCAL';
 
-    return `A GU BM DESLOCOU PARA UM CHAMADO DE SUPOSTO ${upDef(chamada, '-')}. 
-NO LOCAL, COORDENADAS GEOGRÁFICAS ${lat} ${lon}, TRATAVA-SE DE UMA ÁREA DE BIOMA ${bioma.toUpperCase()} COM AS SEGUINTES CARACTERÍSTICAS: ${upDef(caracteristicas, '-')}. 
-A LINHA DE INCÊNDIO DE APROXIMADAMENTE ${upDef(linha_metros, '-')} METROS DESLOCAVA-SE NO SENTIDO ${upDef(sentido_deslocamento, '-')}. O VENTO PREDOMINANTE ESTAVA NO SENTIDO ${upDef(sentido_vento, '-')}, ${info_atmosferica}. VERIFICOU-SE QUE TRATAVA-SE DE INCÊNDIO ${tipo_incendio.toUpperCase()}.
-A GU BM, COM USO DE ${recursos_string} COM UM ${upDef(tecnica, '-')} DEBELOU O INCÊNDIO APÓS ${duracao_extenso} DE COMBATE. 
+    return `A GU BM DESLOCOU PARA UM CHAMADO DE SUPOSTO ${up(chamada)}. 
+NO LOCAL, COORDENADAS GEOGRÁFICAS ${lat} ${lon}, TRATAVA-SE DE UMA ÁREA DE BIOMA ${bioma.toUpperCase()} COM AS SEGUINTES CARACTERÍSTICAS: ${up(caracteristicas)}. 
+A LINHA DE INCÊNDIO DE APROXIMADAMENTE ${linha_metros || '-'} METROS DESLOCAVA-SE NO SENTIDO ${up(sentido_deslocamento)}. O VENTO PREDOMINANTE ESTAVA NO SENTIDO ${up(sentido_vento)}, ${info_atmosferica}. VERIFICOU-SE QUE TRATAVA-SE DE INCÊNDIO ${tipo_incendio.toUpperCase()}.
+A GU BM, COM USO DE ${recursos_string} COM UM ${up(tecnica)} DEBELOU O INCÊNDIO APÓS ${duracao_extenso} DE COMBATE. 
 ${info_origem}.
-NO LOCAL, ${tem_aceiros === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} ACEIROS ${detalhe_aceiros ? `(${upDef(detalhe_aceiros, '')})` : ''}, OU OUTRO MÉTODO PREVENTIVO E ${acumulo_combustivel === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} INDÍCIOS DE ACÚMULO DE COMBUSTÍVEL. FORAM GASTOS ${upDef(litros_agua, '0')} LITROS DE ÁGUA. ${info_area}. ${info_danos}.
-AS EQUIPES BM RECEBERAM APOIO DE ${upDef(apoio, '-')}. 
+NO LOCAL, ${tem_aceiros === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} ACEIROS ${detalhe_aceiros ? `(${up(detalhe_aceiros)})` : ''}, OU OUTRO MÉTODO PREVENTIVO E ${acumulo_combustivel === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} INDÍCIOS DE ACÚMULO DE COMBUSTÍVEL. FORAM GASTOS ${litros_agua || '0'} LITROS DE ÁGUA. ${info_area}. ${info_danos}.
+AS EQUIPES BM RECEBERAM APOIO DE ${up(apoio)}. 
 O RESPONSÁVEL PELA UC (OU ÁREA PARTICULAR) ${info_plano}.
-OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
+OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
   }, [data]);
 
   const copyToClipboard = () => {
@@ -226,67 +217,24 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${upDef(outras_info, '-')}.`;
     }
   };
 
-  const handleAISuggestion = async (fieldName: keyof ReportData, currentText: string) => {
-    if (!currentText || currentText.length < 3) return;
-
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Você é um assistente especializado em relatórios de bombeiros (REDS). 
-Melhore o seguinte texto para o campo "${fieldName}" de um relatório de combate a incêndio florestal.
-O texto deve ser profissional, técnico, conciso e estar em LETRAS MAIÚSCULAS.
-Corrija erros gramaticais e termos técnicos se necessário.
-
-Texto original: "${currentText}"
-
-Retorne APENAS o texto melhorado, sem explicações adicionais.`,
-      });
-
-      if (response.text) {
-        setData(prev => ({ ...prev, [fieldName]: response.text.trim().toUpperCase() }));
-      }
-    } catch (error) {
-      console.error("Erro ao melhorar texto:", error);
-      alert("Houve um erro ao processar a sugestão da IA.");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#F3F4F6] font-sans text-gray-900 pb-12">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 bg-white rounded-full flex items-center justify-center border-2 border-gray-100 overflow-hidden shadow-sm group">
-              {!imageError ? (
-                <img 
-                  src="/bemad_logo.png" 
-                  alt="BEMAD Logo" 
-                  className="w-full h-full object-contain"
-                  referrerPolicy="no-referrer"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div className="relative flex flex-col items-center justify-center w-full h-full text-white bg-black p-2">
-                  <div className="absolute top-1 text-[7px] font-bold tracking-tighter opacity-80">BEMAD</div>
-                  <div className="relative">
-                    <Flame className="w-8 h-8 text-red-500" />
-                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center opacity-20">
-                      <div className="w-6 h-6 border border-white rounded-full"></div>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-1 text-[7px] font-bold tracking-widest opacity-80">PCIF</div>
-                </div>
-              )}
-            </div>
+            <img 
+              src="/bemad_logo.png" 
+              alt="BEMAD Logo" 
+              className="w-12 h-12 object-contain"
+              referrerPolicy="no-referrer"
+            />
             <div>
-              <h1 className="text-xl font-bold text-gray-900 leading-tight uppercase tracking-tight font-sans">Relatório Padrão de Combate aos incêndios Florestais</h1>
+              <h1 className="text-xl font-bold text-gray-900 leading-tight uppercase tracking-tight">Relatório Padrão de Combate aos incêndios Florestais</h1>
               <p className="text-xs text-gray-500 italic">Formulário Padrão de Registro de Eventos de Defesa Social (REDS)</p>
             </div>
           </div>
-          <div className="hidden md:flex flex-col items-end">
-            <div className="text-sm font-bold text-red-600 tracking-wider">PELOTÃO DE COMBATE AOS INCÊNDIOS FLORESTAIS</div>
-          </div>
+
         </div>
       </header>
 
@@ -301,17 +249,8 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
           <div className="space-y-6">
             <Section title="1. Dados da Ocorrência">
               <div className="space-y-4">
-                <label className="block relative group">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Dados da Chamada</span>
-                    <button 
-                      onClick={() => handleAISuggestion('chamada', data.chamada)}
-                      disabled={!data.chamada || data.chamada.length < 3}
-                      className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
-                    >
-                      <Sparkles className="w-3 h-3" /> Melhorar com IA
-                    </button>
-                  </div>
+                <label className="block">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Dados da Chamada</span>
                   <textarea
                     name="chamada"
                     value={data.chamada}
@@ -320,17 +259,6 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
                     className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-100 transition-all font-sans"
                     rows={2}
                   />
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {['FUMAÇA EM ÁREA DE MATA', 'INCÊNDIO PRÓXIMO À RODOVIA', 'FOGO EM TERRENO BALDIO'].map(sug => (
-                      <button 
-                        key={sug}
-                        onClick={() => setData(prev => ({ ...prev, chamada: sug }))}
-                        className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
-                      >
-                        {sug}
-                      </button>
-                    ))}
-                  </div>
                 </label>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -382,17 +310,8 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
                   </select>
                 </label>
               </div>
-              <label className="block relative group">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Características da Vegetação</span>
-                  <button 
-                    onClick={() => handleAISuggestion('caracteristicas', data.caracteristicas)}
-                    disabled={!data.caracteristicas || data.caracteristicas.length < 3}
-                    className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
-                  >
-                    <Sparkles className="w-3 h-3" /> Melhorar com IA
-                  </button>
-                </div>
+              <label className="block">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Características da Vegetação</span>
                 <textarea
                   name="caracteristicas"
                   value={data.caracteristicas}
@@ -401,17 +320,6 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
                   className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
                   rows={2}
                 />
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {['MATA CILIAR', 'CERRADO DENSO', 'CAMPO SUJO', 'PASTAGEM SECA'].map(sug => (
-                    <button 
-                      key={sug}
-                      onClick={() => setData(prev => ({ ...prev, caracteristicas: sug }))}
-                      className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
-                    >
-                      {sug}
-                    </button>
-                  ))}
-                </div>
               </label>
             </Section>
 
@@ -611,17 +519,8 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
                      />
                   </div>
                 )}
-                <label className="block relative group">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Causa Presumida</span>
-                    <button 
-                      onClick={() => handleAISuggestion('causa', data.causa)}
-                      disabled={!data.causa || data.causa.length < 3}
-                      className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
-                    >
-                      <Sparkles className="w-3 h-3" /> Melhorar com IA
-                    </button>
-                  </div>
+                <label className="block">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Causa Presumida</span>
                   <input
                     type="text"
                     name="causa"
@@ -630,17 +529,6 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
                     placeholder="antrópica, lixão, raio, testemunha..."
                     className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
                   />
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {['AÇÃO ANTRÓPICA PROVOCADA', 'DESCONHECIDA', 'CURTO-CIRCUITO EM REDE ELÉTRICA'].map(sug => (
-                      <button 
-                        key={sug}
-                        onClick={() => setData(prev => ({ ...prev, causa: sug }))}
-                        className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
-                      >
-                        {sug}
-                      </button>
-                    ))}
-                  </div>
                 </label>
               </div>
             </Section>
@@ -766,17 +654,8 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
                 </div>
 
                 {data.danos_identificados && (
-                  <label className="block animate-in fade-in slide-in-from-top-1 duration-200 relative group">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Danos Causados</span>
-                      <button 
-                        onClick={() => handleAISuggestion('danos', data.danos)}
-                        disabled={!data.danos || data.danos.length < 3}
-                        className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
-                      >
-                        <Sparkles className="w-3 h-3" /> Melhorar com IA
-                      </button>
-                    </div>
+                  <label className="block animate-in fade-in slide-in-from-top-1 duration-200">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Danos Causados</span>
                     <textarea
                       name="danos"
                       value={data.danos}
@@ -785,17 +664,6 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
                       className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
                       rows={2}
                     />
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {['DANOS À FAUNA E FLORA LOCAL', 'CERCA DE PROPRIEDADE RURAL', 'REDES DE ENERGIA'].map(sug => (
-                        <button 
-                          key={sug}
-                          onClick={() => setData(prev => ({ ...prev, danos: sug }))}
-                          className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[9px] text-gray-600 rounded transition-colors"
-                        >
-                          {sug}
-                        </button>
-                      ))}
-                    </div>
                   </label>
                 )}
                 <label className="block">
@@ -813,17 +681,8 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
             </Section>
 
             <Section title="8. Finalização">
-                <label className="block relative group">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Outras Informações Relevantes</span>
-                    <button 
-                      onClick={() => handleAISuggestion('outras_info', data.outras_info)}
-                      disabled={!data.outras_info || data.outras_info.length < 3}
-                      className="text-[9px] flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors opacity-0 group-focus-within:opacity-100 disabled:opacity-0"
-                    >
-                      <Sparkles className="w-3 h-3" /> Melhorar com IA
-                    </button>
-                  </div>
+                <label className="block">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Outras Informações Relevantes</span>
                   <textarea
                     name="outras_info"
                     value={data.outras_info}
