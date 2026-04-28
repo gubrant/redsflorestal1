@@ -71,6 +71,7 @@ interface ReportData {
   apoio: string;
   plano_contingencia: string;
   outras_info: string;
+  responsavel_nao_encontrado: boolean;
 }
 
 const initialData: ReportData = {
@@ -124,6 +125,7 @@ const initialData: ReportData = {
   apoio: '',
   plano_contingencia: 'NÃO',
   outras_info: '',
+  responsavel_nao_encontrado: false,
 };
 
 export default function App() {
@@ -147,7 +149,8 @@ export default function App() {
       dias_combate, horas_combate, minutos_combate,
       origem_identificada, origem_lat_graus, origem_lat_min, origem_lat_seg, origem_lon_graus, origem_lon_min, origem_lon_seg,
       causa, tem_aceiros, detalhe_aceiros, acumulo_combustivel, litros_agua,
-      area_aferida, area_queimada, metodo_afericao, danos_identificados, danos, apoio, plano_contingencia, outras_info
+      area_aferida, area_queimada, metodo_afericao, danos_identificados, danos, apoio, plano_contingencia, outras_info,
+      responsavel_nao_encontrado
     } = data;
 
     const lat = `${lat_graus || '___'}°${lat_min || '___'}'${lat_seg || '___'}"S`;
@@ -158,8 +161,9 @@ export default function App() {
 
     const up = (val: string) => (val || '-').toUpperCase();
 
+    const info_causa = causa ? ` COM CAUSA PRESUMIDA ${up(causa)}` : '';
     const info_origem = origem_identificada 
-      ? `PRESUME-SE A ORIGEM DO INCÊNDIO SE DEU NO PONTO ${origem_lat_graus ? origem_lat : '__°__\'__._"S'} ${origem_lon_graus ? origem_lon : '__°__\'__._"W'} COM CAUSA PRESUMIDA ${up(causa)}`
+      ? `PRESUME-SE A ORIGEM DO INCÊNDIO SE DEU NO PONTO ${origem_lat_graus ? origem_lat : '__°__\'__._"S'} ${origem_lon_graus ? origem_lon : '__°__\'__._"W'}${info_causa}`
       : 'NÃO FOI POSSÍVEL IDENTIFICAR O PONTO EXATO DE ORIGEM';
 
     const info_area = area_aferida
@@ -170,9 +174,9 @@ export default function App() {
       ? `O INCÊNDIO CAUSOU OS SEGUINTES DANOS ${up(danos)}`
       : `NÃO FORAM IDENTIFICADOS DANOS MATERIAIS OU ÀS PESSOAS NO LOCAL`;
 
-    const info_atmosferica = dados_atmosfericos_disponiveis
-      ? `TEMPERATURA DE ${temperatura || '-'}°C E UMIDADE DO AR DE ${umidade || '-'}%`
-      : `NÃO HAVIA MEIO DISPONÍVEL PARA COLETAR OS DADOS ATMOSFÉRICOS NO LOCAL`;
+    const info_vento_clima = dados_atmosfericos_disponiveis
+      ? `O VENTO PREDOMINANTE ESTAVA NO SENTIDO ${up(sentido_vento)}, TEMPERATURA DE ${temperatura || '-'}°C E UMIDADE DO AR DE ${umidade || '-'}%`
+      : `NÃO HAVIA MEIO DISPONÍVEL PARA COLETAR OS DADOS ATMOSFÉRICOS`;
 
     const recursos_list = [];
     if (recurso_soprador) recursos_list.push('SOPRADOR');
@@ -194,14 +198,22 @@ export default function App() {
       ? 'APRESENTOU O PLANO DE CONTINGÊNCIA DO LOCAL, DEVIDAMENTE ANEXADO A ESTE REDS'
       : 'NÃO APRESENTOU O PLANO DE CONTINGÊNCIA DO LOCAL';
 
+    const info_linha = linha_metros 
+      ? `A LINHA DE INCÊNDIO DE APROXIMADAMENTE ${linha_metros} METROS DESLOCAVA-SE NO SENTIDO ${up(sentido_deslocamento)}. `
+      : '';
+
+    const label_responsavel = responsavel_nao_encontrado
+      ? 'O RESPONSÁVEL PELA UC / PROPRIEDADE NÃO FOI ENCONTRADO'
+      : `O RESPONSÁVEL PELA UC (OU ÁREA PARTICULAR) ${info_plano}`;
+
     return `A GU BM DESLOCOU PARA UM CHAMADO DE SUPOSTO ${up(chamada)}. 
 NO LOCAL, COORDENADAS GEOGRÁFICAS ${lat} ${lon}, TRATAVA-SE DE UMA ÁREA DE BIOMA ${bioma.toUpperCase()} COM AS SEGUINTES CARACTERÍSTICAS: ${up(caracteristicas)}. 
-A LINHA DE INCÊNDIO DE APROXIMADAMENTE ${linha_metros || '-'} METROS DESLOCAVA-SE NO SENTIDO ${up(sentido_deslocamento)}. O VENTO PREDOMINANTE ESTAVA NO SENTIDO ${up(sentido_vento)}, ${info_atmosferica}. VERIFICOU-SE QUE TRATAVA-SE DE INCÊNDIO ${tipo_incendio.toUpperCase()}.
+${info_linha}${info_vento_clima}. VERIFICOU-SE QUE TRATAVA-SE DE INCÊNDIO ${tipo_incendio.toUpperCase()}.
 A GU BM, COM USO DE ${recursos_string} COM UM ${up(tecnica)} DEBELOU O INCÊNDIO APÓS ${duracao_extenso} DE COMBATE. 
 ${info_origem}.
 NO LOCAL, ${tem_aceiros === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} ACEIROS ${detalhe_aceiros ? `(${up(detalhe_aceiros)})` : ''}, OU OUTRO MÉTODO PREVENTIVO E ${acumulo_combustivel === 'SIM' ? 'HAVIA' : 'NÃO HAVIA'} INDÍCIOS DE ACÚMULO DE COMBUSTÍVEL. FORAM GASTOS ${litros_agua || '0'} LITROS DE ÁGUA. ${info_area}. ${info_danos}.
 AS EQUIPES BM RECEBERAM APOIO DE ${up(apoio)}. 
-O RESPONSÁVEL PELA UC (OU ÁREA PARTICULAR) ${info_plano}.
+${label_responsavel}.
 OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
   }, [data]);
 
@@ -242,7 +254,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
         {/* Form Column */}
         <section className="space-y-6">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-1 h-6 bg-red-600 rounded-full" />
+            <div className="w-1 h-6 bg-emerald-600 rounded-full" />
             <h2 className="text-xl font-bold uppercase tracking-wider text-gray-700">Preenchimento</h2>
           </div>
 
@@ -256,7 +268,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     value={data.chamada}
                     onChange={handleChange}
                     placeholder="Ex: Fumaça saindo de área de mata próxima à rodovia..."
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-100 transition-all font-sans"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 transition-all font-sans"
                     rows={2}
                   />
                 </label>
@@ -286,7 +298,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     name="bioma"
                     value={data.bioma}
                     onChange={handleChange}
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                   >
                     <option value="cerrado">Cerrado</option>
                     <option value="mata atlântica">Mata Atlântica</option>
@@ -301,7 +313,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     name="tipo_incendio"
                     value={data.tipo_incendio}
                     onChange={handleChange}
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                   >
                     <option value="Superficial">Superficial</option>
                     <option value="subterrâneo">Subterrâneo</option>
@@ -317,7 +329,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                   value={data.caracteristicas}
                   onChange={handleChange}
                   placeholder="mata ciliar, mata de galeria, pastagem, mata fechada..."
-                  className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
+                  className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all font-sans"
                   rows={2}
                 />
               </label>
@@ -331,7 +343,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     id="dados_atmosfericos_disponiveis"
                     checked={!data.dados_atmosfericos_disponiveis}
                     onChange={(e) => setData(prev => ({ ...prev, dados_atmosfericos_disponiveis: !e.target.checked }))}
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                   />
                   <label htmlFor="dados_atmosfericos_disponiveis" className="text-xs font-semibold text-gray-600 uppercase tracking-tight mb-0 cursor-pointer">
                     Não havia meio disponível para coletar os dados atmosféricos
@@ -346,7 +358,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                       name="linha_metros"
                       value={data.linha_metros}
                       onChange={handleChange}
-                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                     />
                   </label>
                   <label className="block">
@@ -357,7 +369,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                       value={data.sentido_deslocamento}
                       onChange={handleChange}
                       placeholder="Ex: SUDESTE"
-                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                     />
                   </label>
                   <label className="block">
@@ -368,7 +380,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                       value={data.sentido_vento}
                       onChange={handleChange}
                       placeholder="Ex: NORTE-SUL"
-                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                     />
                   </label>
                   {data.dados_atmosfericos_disponiveis && (
@@ -380,7 +392,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                           name="temperatura"
                           value={data.temperatura}
                           onChange={handleChange}
-                          className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                          className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                         />
                       </label>
                       <label className="block">
@@ -390,7 +402,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                           name="umidade"
                           value={data.umidade}
                           onChange={handleChange}
-                          className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                          className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                         />
                       </label>
                     </div>
@@ -420,9 +432,9 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                             type="checkbox"
                             checked={(data as any)[item.id]}
                             onChange={(e) => setData(prev => ({ ...prev, [item.id]: e.target.checked }))}
-                            className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                           />
-                          <span className="text-[10px] font-semibold text-gray-600 group-hover:text-red-600 transition-colors">{item.label}</span>
+                          <span className="text-[10px] font-semibold text-gray-600 group-hover:text-emerald-600 transition-colors">{item.label}</span>
                         </label>
                       ))}
                     </div>
@@ -433,7 +445,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                         value={data.recurso_outros_txt}
                         onChange={handleChange}
                         placeholder="Especifique outros equipamentos..."
-                        className="mt-2 w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 animate-in fade-in slide-in-from-top-1"
+                        className="mt-2 w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 animate-in fade-in slide-in-from-top-1"
                       />
                     )}
                   </div>
@@ -443,7 +455,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                       name="tecnica"
                       value={data.tecnica}
                       onChange={handleChange}
-                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                     >
                       <option value="ATAQUE DIRETO ÀS CHAMAS">Ataque Direto</option>
                       <option value="ATAQUE INDIRETO">Ataque Indireto</option>
@@ -459,7 +471,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                         value={data.dias_combate}
                         onChange={handleChange}
                         placeholder="00"
-                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                       />
                     </label>
                     <label className="block">
@@ -470,7 +482,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                         value={data.horas_combate}
                         onChange={handleChange}
                         placeholder="00"
-                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                       />
                     </label>
                     <label className="block">
@@ -481,7 +493,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                         value={data.minutos_combate}
                         onChange={handleChange}
                         placeholder="00"
-                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                       />
                     </label>
                   </div>
@@ -496,7 +508,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     id="origem_identificada"
                     checked={!data.origem_identificada}
                     onChange={(e) => setData(prev => ({ ...prev, origem_identificada: !e.target.checked }))}
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                   />
                   <label htmlFor="origem_identificada" className="text-xs font-semibold text-gray-600 uppercase tracking-tight mb-0 cursor-pointer">
                     Não foi possível identificar o ponto exato de origem
@@ -527,7 +539,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     value={data.causa}
                     onChange={handleChange}
                     placeholder="antrópica, lixão, raio, testemunha..."
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                   />
                 </label>
               </div>
@@ -541,7 +553,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     name="tem_aceiros"
                     value={data.tem_aceiros}
                     onChange={handleChange}
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                   >
                     <option value="SIM">SIM</option>
                     <option value="NÃO">NÃO</option>
@@ -556,7 +568,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                       value={data.detalhe_aceiros}
                       onChange={handleChange}
                       placeholder="Largura, conservação..."
-                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                     />
                   </label>
                 )}
@@ -566,7 +578,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     name="acumulo_combustivel"
                     value={data.acumulo_combustivel}
                     onChange={handleChange}
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                   >
                     <option value="SIM">SIM</option>
                     <option value="NÃO">NÃO</option>
@@ -579,7 +591,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     name="litros_agua"
                     value={data.litros_agua}
                     onChange={handleChange}
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                   />
                 </label>
 
@@ -590,7 +602,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                       id="area_aferida"
                       checked={!data.area_aferida}
                       onChange={(e) => setData(prev => ({ ...prev, area_aferida: !e.target.checked }))}
-                      className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                     />
                     <label htmlFor="area_aferida" className="text-xs font-semibold text-gray-600 uppercase tracking-tight mb-0 cursor-pointer">
                       Não foi possível aferir a área queimada
@@ -607,7 +619,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                         name="area_queimada"
                         value={data.area_queimada}
                         onChange={handleChange}
-                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9"
+                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9"
                       />
                     </label>
                     <label className="block">
@@ -618,7 +630,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                         value={data.metodo_afericao}
                         onChange={handleChange}
                         placeholder="GPS, SentinelHUB, Google Maps..."
-                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                        className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                       />
                     </label>
                   </>
@@ -629,12 +641,27 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     name="plano_contingencia"
                     value={data.plano_contingencia}
                     onChange={handleChange}
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                   >
                     <option value="SIM">SIM</option>
                     <option value="NÃO">NÃO</option>
                   </select>
                 </label>
+
+                <div className="col-span-1 md:col-span-2">
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <input
+                      type="checkbox"
+                      id="responsavel_nao_encontrado"
+                      checked={data.responsavel_nao_encontrado}
+                      onChange={(e) => setData(prev => ({ ...prev, responsavel_nao_encontrado: e.target.checked }))}
+                      className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="responsavel_nao_encontrado" className="text-xs font-semibold text-gray-600 uppercase tracking-tight mb-0 cursor-pointer">
+                      Responsável pela UC / Propriedade não foi encontrado
+                    </label>
+                  </div>
+                </div>
               </div>
             </Section>
 
@@ -646,7 +673,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     id="danos_identificados"
                     checked={!data.danos_identificados}
                     onChange={(e) => setData(prev => ({ ...prev, danos_identificados: !e.target.checked }))}
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                   />
                   <label htmlFor="danos_identificados" className="text-xs font-semibold text-gray-600 uppercase tracking-tight mb-0 cursor-pointer">
                     Danos não foram identificados no local
@@ -660,8 +687,8 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                       name="danos"
                       value={data.danos}
                       onChange={handleChange}
-                      placeholder="Casas, veículos, animais, plantações, linhas de energia..."
-                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
+                      placeholder="Casas, veículos, animais, plantações, lines de energia..."
+                      className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all font-sans"
                       rows={2}
                     />
                   </label>
@@ -674,7 +701,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     value={data.apoio}
                     onChange={handleChange}
                     placeholder="PMMG, Brigadas, PRF, etc..."
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all h-9 font-sans"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all h-9 font-sans"
                   />
                 </label>
               </div>
@@ -688,7 +715,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                     value={data.outras_info}
                     onChange={handleChange}
                     placeholder="Alterações FEAs, feridos, detenções, objetos encontrados..."
-                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
+                    className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition-all font-sans"
                     rows={3}
                   />
                 </label>
@@ -699,7 +726,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
         {/* Preview Column */}
         <section className="lg:sticky lg:top-24 space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-1 h-6 bg-red-600 rounded-full" />
+            <div className="w-1 h-6 bg-emerald-600 rounded-full" />
             <h2 className="text-xl font-bold uppercase tracking-wider text-gray-900">Relatório REDS Gerado</h2>
           </div>
           
@@ -716,7 +743,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
                 <button
                   onClick={copyToClipboard}
                   className={`flex items-center gap-2 px-4 py-1.5 rounded transition-all text-xs font-bold uppercase tracking-wider shadow-sm ${
-                    copied ? 'bg-green-600 text-white' : 'bg-red-600 text-white hover:bg-red-700'
+                    copied ? 'bg-green-600 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'
                   }`}
                 >
                   {copied ? <ClipboardCheck className="w-3.5 h-3.5" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
@@ -770,7 +797,7 @@ function CoordinateInput({ label, prefix, data, onChange }: {
             value={data[`${prefix}_graus`]}
             onChange={onChange}
             placeholder="G"
-            className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
+            className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all font-sans"
           />
           <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">°</span>
         </div>
@@ -781,7 +808,7 @@ function CoordinateInput({ label, prefix, data, onChange }: {
             value={data[`${prefix}_min`]}
             onChange={onChange}
             placeholder="M"
-            className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
+            className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all font-sans"
           />
           <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">'</span>
         </div>
@@ -793,7 +820,7 @@ function CoordinateInput({ label, prefix, data, onChange }: {
             value={data[`${prefix}_seg`]}
             onChange={onChange}
             placeholder="S"
-            className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-red-500 transition-all font-sans"
+            className="w-full bg-[#F9FAFB] border border-[#D1D5DB] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all font-sans"
           />
           <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">"</span>
         </div>
