@@ -286,7 +286,7 @@ Retorne APENAS o texto melhorado, sem explicações adicionais.`,
           </div>
           <div className="hidden md:flex flex-col items-end">
             <div className="text-sm font-bold text-red-600 tracking-wider">PELOTÃO DE COMBATE AOS INCÊNDIOS FLORESTAIS</div>
-            <div className="text-[10px] text-gray-400 font-mono">NATUREZA O 4000</div>
+            <div className="text-[12px] text-gray-400 font-mono">NATUREZA O 4000</div>
           </div>
         </div>
       </header>
