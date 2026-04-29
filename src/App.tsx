@@ -18,7 +18,6 @@ import {
   Trash2,
   Info
 } from 'lucide-react';
-import bemadLogo from './bemad_logo.png';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ReportData {
@@ -236,12 +235,6 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img 
-              src={bemadLogo} 
-              alt="BEMAD Logo" 
-              className="w-12 h-12 object-contain"
-              referrerPolicy="no-referrer"
-            />
             <div>
               <h1 className="text-xl font-bold text-gray-900 leading-tight uppercase tracking-tight">Relatório Padrão de Combate aos incêndios Florestais</h1>
               <p className="text-xs text-gray-500 italic">Formulário Padrão de Registro de Eventos de Defesa Social (REDS)</p>
