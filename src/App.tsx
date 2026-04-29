@@ -18,6 +18,7 @@ import {
   Trash2,
   Info
 } from 'lucide-react';
+import bemadLogo from './bemad_logo.png';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ReportData {
@@ -236,7 +237,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img 
-              src="/bemad_logo.png" 
+              src={bemadLogo} 
               alt="BEMAD Logo" 
               className="w-12 h-12 object-contain"
               referrerPolicy="no-referrer"
