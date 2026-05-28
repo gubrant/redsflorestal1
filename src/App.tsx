@@ -19,6 +19,7 @@ import {
   Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import bemadLogo from './assets/images/bemad_logo_1779934270607.png';
 
 interface ReportData {
   chamada: string;
@@ -240,7 +241,14 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
               <p className="text-xs text-gray-500 italic">Formulário Padrão de Registro de Eventos de Defesa Social (REDS)</p>
             </div>
           </div>
-
+          <div className="flex items-center">
+            <img 
+              src={bemadLogo} 
+              alt="BEMAD Logo" 
+              className="h-16 w-16 object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
         </div>
       </header>
 
