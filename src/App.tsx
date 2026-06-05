@@ -19,7 +19,7 @@ import {
   Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import bemadLogo from './assets/images/bemad_logo_1779934270607.png';
+import bemadLogo from './assets/images/bemad_logo_white_1780617688873.png';
 
 interface ReportData {
   chamada: string;
@@ -245,7 +245,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
             <img 
               src={bemadLogo} 
               alt="BEMAD Logo" 
-              className="h-16 w-16 object-contain"
+              className="h-16 w-16 object-contain mix-blend-multiply"
               referrerPolicy="no-referrer"
             />
           </div>
