@@ -234,7 +234,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
     <div className="min-h-screen bg-[#F3F4F6] font-sans text-gray-900 pb-12">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div>
               <h1 className="text-xl font-bold text-gray-900 leading-tight uppercase tracking-tight">Relatório Padrão de Combate aos incêndios Florestais</h1>
@@ -245,7 +245,7 @@ OUTRAS INFORMAÇÕES RELEVANTES: ${up(outras_info)}.`;
             <img 
               src={bemadLogo} 
               alt="BEMAD Logo" 
-              className="h-48 w-48 object-contain mix-blend-multiply"
+              className="h-24 w-24 object-contain mix-blend-multiply"
               referrerPolicy="no-referrer"
             />
           </div>
